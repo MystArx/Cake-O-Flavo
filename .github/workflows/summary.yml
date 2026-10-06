@@ -1,0 +1,14 @@
+# Free scheduler: pokes your app, which emails the summary. Times are UTC (08:00 India = 02:30 UTC).
+name: email-summaries
+on:
+  schedule:
+    - cron: "30 2 * * 1"   # every Monday -> weekly
+    - cron: "30 2 1 * *"   # 1st of month -> monthly
+  workflow_dispatch:
+jobs:
+  send:
+    runs-on: ubuntu-latest
+    steps:
+      - run: |
+          P=weekly; [ "$(date -u +%d)" = "01" ] && P=monthly
+          curl -fsS --max-time 180 -u "x:${{ secrets.APP_PASSWORD }}" "${{ secrets.APP_URL }}/api/cron/$P"
