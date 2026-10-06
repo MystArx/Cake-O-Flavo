@@ -2,6 +2,8 @@
 <html lang="en"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#c92a66">
+<link rel="manifest" href="/manifest.webmanifest"><link rel="apple-touch-icon" href="/icons/apple-180.png">
+<meta name="apple-mobile-web-app-capable" content="yes"><meta name="mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"><meta name="apple-mobile-web-app-title" content="Billing">
 <title>Billing</title>
 <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🧁</text></svg>">
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -97,7 +99,10 @@ input,select,textarea{background:var(--inp)}.ic2{background:var(--inp)}.ic2 inpu
 .wk{display:flex;gap:8px;margin-top:14px}.wk>div{flex:1;text-align:center}.wb{display:flex;align-items:flex-end;justify-content:center;height:90px}.wb i{display:block;width:100%;border-radius:8px 8px 3px 3px;background:var(--bar)}.wk .max i{background:linear-gradient(180deg,#ff8db3,#c92a66)}.wk small{font-size:11px}
 @media(min-width:700px){.kpis{grid-template-columns:repeat(3,minmax(0,1fr))}}
 @media(min-width:1000px){.kpis{grid-template-columns:repeat(6,minmax(0,1fr))}.dg{grid-template-columns:repeat(2,minmax(0,1fr))}.span2{grid-column:1/-1}}
-</style></head><body><div id="app"><div class="load"></div></div><div id="toast" class="toast" role="status"></div>
+.syncpill{position:fixed;top:calc(8px + env(safe-area-inset-top,0px));left:50%;transform:translate(-50%,-90px);z-index:50;background:var(--ink);color:var(--bg);padding:8px 16px;border-radius:99px;font-size:13px;font-weight:600;transition:transform .3s;white-space:nowrap;max-width:94vw;overflow:hidden;text-overflow:ellipsis}.syncpill.show{transform:translate(-50%,0)}.syncpill a{color:inherit}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+.acts .btn{white-space:nowrap;padding:0 14px}.seg button{padding:7px 10px}
+</style></head><body><div id="app"><div class="load"></div></div><div id="toast" class="toast" role="status"></div><div id="sync" class="syncpill" role="status"></div>
 <script>
 let S={set:{name:'Cake-O-Flavo',addr:'B6/1004, Tulip Violet\nSector 69\nGurugram Haryana 122101\nIndia',email:'oolive.in.styleoo@gmail.com',phone:'+91 6306 839 611',insta:'cake_o_flavo',sign:'Baker-in-chief: Aakanksha',cur:'₹',tax:0,title:'TAX INVOICE',note:'We hope our cake has tickled your taste buds with undefined deliciousness. Thank you for making us a part of your joyous celebrations.',logo:'',next:98},cust:[],prod:[],inv:[],exp:[]};
 const $=s=>document.querySelector(s);
@@ -111,7 +116,7 @@ const MN='Jan Feb Mar Apr May Jun Jul Aug Sep Oct Nov Dec'.split(' ');
 const fd=(s,short)=>{if(!s)return '';const[y,m,d]=s.split('-');return +d+' '+MN[m-1]+(short&&+y==new Date().getFullYear()?'':' '+y)};
 const no=i=>'INV-'+String(i.no).padStart(6,'0');
 const calc=d=>{const s=d.items.reduce((a,i)=>a+(+i.qty||0)*(+i.rate||0),0),x=Math.max(0,s-(+d.disc||0)),t=x*(+d.tax||0)/100;return{s,t,g:x+t}};
-const src=id=>String(id).startsWith('data:')?id:'/api/img/'+id;
+const src=id=>LOCAL[id]||(String(id).startsWith('data:')?id:'/api/img/'+id);
 const ico=(p,s=22)=>`<svg viewBox="0 0 24 24" width="${s}" height="${s}" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="${p}"/></svg>`;
 const IC={dash:'M3 11l9-8 9 8M5 10v10h5v-6h4v6h5V10',inv:'M7 3h7l5 5v13H7zM14 3v5h5M10 13h6M10 17h6',plus:'M12 5v14M5 12h14',exp:'M3 7h16a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2zM3 7l2-3h12M16 13.5h.01',more:'M5 12h.01M12 12h.01M19 12h.01',cust:'M9 11a4 4 0 100-8 4 4 0 000 8zM2 21c0-4 3-6 7-6s7 2 7 6M17 4a4 4 0 010 7M22 21c0-3-2-5-4-5.6',prod:'M3 8l9-5 9 5v8l-9 5-9-5zM3 8l9 5 9-5M12 13v8',set:'M4 6h10M18 6h2M4 12h2M10 12h10M4 18h12M20 18h0M14 4v4M8 10v4M16 16v4',chev:'M9 6l6 6-6 6',camera:'M4 8h3l2-3h6l2 3h3v11H4zM12 17a4 4 0 100-8 4 4 0 000 8z',search:'M11 18a7 7 0 100-14 7 7 0 000 14zM21 21l-5-5',dl:'M12 4v11M7 11l5 5 5-5M5 20h14',x:'M6 6l12 12M18 6L6 18',check:'M5 12.5l4.5 4.5L19 7.5',back:'M15 6l-6 6 6 6',out:'M9 4H5v16h4M16 8l4 4-4 4M20 12H9',ext:'M14 4h6v6M20 4l-9 9M18 14v6H4V6h6',tup:'M3 17l6-6 4 4 8-8M15 7h6v6',tdn:'M3 7l6 6 4-4 8 8M15 17h6v-6',chk:'M9 12l2 2 4-4M12 21a9 9 0 100-18 9 9 0 000 18z',clock:'M12 7v5l3 2M12 21a9 9 0 100-18 9 9 0 000 18z',spark:'M12 3l2.2 5.8L20 11l-5.8 2.2L12 19l-2.2-5.8L4 11l5.8-2.2z',pie:'M12 3a9 9 0 109 9h-9zM15 3.5A9 9 0 0120.5 9H15z',star:'M12 3l2.8 5.7 6.2.9-4.5 4.4 1 6.2L12 17.3 6.5 20.2l1-6.2L3 9.6l6.2-.9z',cal:'M4 6h16v14H4zM4 10h16M9 3v4M15 3v4'};
 const T={dash:'Home',inv:'Invoices',exp:'Expenses',more:'More',cust:'Customers',prod:'Products',set:'Settings'};
@@ -121,13 +126,50 @@ const av=n=>{const s=String(n||'?').trim(),h=[...s].reduce((a,c)=>a+c.charCodeAt
 function img(file,max,cb){const r=new FileReader();r.onload=()=>{const i=new Image();i.onload=()=>{const k=Math.min(1,max/Math.max(i.width,i.height)),c=document.createElement('canvas');c.width=i.width*k;c.height=i.height*k;const x=c.getContext('2d');x.fillStyle='#fff';x.fillRect(0,0,c.width,c.height);x.drawImage(i,0,0,c.width,c.height);cb(c.toDataURL('image/jpeg',.72))};i.src=r.result};r.readAsDataURL(file)}
 const upload=u=>fetch('/api/img',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({data:u})}).then(r=>{if(!r.ok)throw 0;return r.json()}).then(j=>j.id);
 let tt;const toast=m=>{const e=$('#toast');e.textContent=m;e.classList.add('show');clearTimeout(tt);tt=setTimeout(()=>e.classList.remove('show'),2300)};
-let snap={},tm,V='dash',D=null,E=null,VID=null,P='month',Q='',F='all';
+let snap={},tm,pt,V='dash',D=null,E=null,VID=null,P='month',Q='',F='all',XR='month',LOCAL={},state='ok',syncing=false,again=false,DEF=null;
+const idb={db:null,open(){return this.db||(this.db=new Promise((res,rej)=>{const q=indexedDB.open('cof',1);q.onupgradeneeded=()=>q.result.createObjectStore('kv');q.onsuccess=()=>res(q.result);q.onerror=()=>rej(q.error)}))},
+  async get(k){try{const d=await this.open();return await new Promise(r=>{const q=d.transaction('kv').objectStore('kv').get(k);q.onsuccess=()=>r(q.result);q.onerror=()=>r()})}catch(e){}},
+  async set(k,v){try{const d=await this.open();await new Promise(r=>{const t=d.transaction('kv','readwrite');t.objectStore('kv').put(v,k);t.oncomplete=r;t.onerror=r})}catch(e){}},
+  async clear(){try{const d=await this.open();await new Promise(r=>{const t=d.transaction('kv','readwrite');t.objectStore('kv').clear();t.oncomplete=r;t.onerror=r})}catch(e){}}};
 const docs=()=>{const m={'set:main':S.set};['cust','prod','inv','exp'].forEach(k=>S[k].forEach(x=>m[k+':'+x.id]=x));return m};
-function flush(){const m=docs(),put=[],del=[];
-  for(const k in m){const j=JSON.stringify(m[k]);if(snap[k]!==j){snap[k]=j;put.push([k,m[k]])}}
-  for(const k in snap)if(!(k in m)){delete snap[k];del.push(k)}
-  if(put.length||del.length)fetch('/api/sync',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({put,del})}).then(r=>{if(!r.ok)throw 0}).catch(()=>{put.forEach(([k])=>delete snap[k]);toast('Could not save. Check your connection.')})}
-const save=()=>{clearTimeout(tm);tm=setTimeout(flush,300)};
+const pendingCount=()=>{const m=docs();let n=Object.keys(LOCAL).length;for(const k in m)if(snap[k]!==JSON.stringify(m[k]))n++;for(const k in snap)if(!(k in m))n++;return n};
+const synced=id=>{const i=S.inv.find(x=>x.id==id);return !!i&&snap['inv:'+id]===JSON.stringify(i)};
+const persist=()=>{clearTimeout(pt);pt=setTimeout(()=>idb.set('state',{S,snap}),120)};
+function pill(){const e=$('#sync');if(!e)return;const n=pendingCount(),w=n?` · ${n} change${n>1?'s':''} saved on this phone`:'';let t='';
+  if(state=='auth')t='<a href="/login">Session expired. Log in to sync</a>';
+  else if(state=='offline'||!navigator.onLine)t='Offline'+(w||' · you can keep working');
+  else if(state=='pending')t='Waiting to sync'+w;
+  e.innerHTML=t;e.classList.toggle('show',!!t)}
+const remap=(a,b)=>{const f=l=>(l||[]).map(x=>x==a?b:x).filter(Boolean);S.inv.forEach(i=>{i.imgs=f(i.imgs)});if(D&&D.imgs)D.imgs=f(D.imgs);if(S.set.logo==a)S.set.logo=b||''};
+async function uploadLocal(){for(const id of Object.keys(LOCAL)){
+  const r=await fetch('/api/img',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({data:LOCAL[id]})});
+  if(r.status==401)throw new Error('auth');
+  if(r.status==400){remap(id,null);delete LOCAL[id];await idb.set('limgs',LOCAL);continue}
+  if(!r.ok)throw 0;
+  const real=(await r.json()).id;remap(id,real);delete LOCAL[id];await idb.set('limgs',LOCAL);fetch('/api/img/'+real).catch(()=>{})}}
+async function flush(){
+  if(syncing){again=true;return false}
+  syncing=true;const was=state;let ok=false,changed=false;
+  try{
+    await uploadLocal();
+    const m=docs(),put=[],del=[];
+    for(const k in m){const j=JSON.stringify(m[k]);if(snap[k]!==j)put.push([k,m[k],j])}
+    for(const k in snap)if(!(k in m))del.push(k);
+    if(put.length||del.length){
+      const r=await fetch('/api/sync',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({put:put.map(p=>[p[0],p[1]]),del})});
+      if(r.status==401)throw new Error('auth');
+      if(!r.ok)throw 0;
+      put.forEach(p=>snap[p[0]]=p[2]);del.forEach(k=>delete snap[k]);changed=true}
+    state='ok';ok=true;persist()
+  }catch(e){state=e&&e.message=='auth'?'auth':navigator.onLine?'pending':'offline'}
+  syncing=false;pill();
+  if(V=='view'&&!D&&(changed||was!=state))render();
+  if(again){again=false;flush()}
+  return ok}
+const save=()=>{persist();pill();clearTimeout(tm);tm=setTimeout(flush,300)};
+const normalize=()=>S.inv.forEach(i=>{i.imgs=i.imgs||[];i.items.forEach(t=>{if(t.rate==null)t.rate=t.price})});
+function warm(){S.inv.slice().sort((a,b)=>b.no-a.no).slice(0,40).forEach(i=>(i.imgs||[]).forEach(id=>{if(!LOCAL[id])fetch('/api/img/'+id).catch(()=>{})}));if(S.set.logo&&!LOCAL[S.set.logo])fetch(src(S.set.logo)).catch(()=>{})}
+function adopt(d){S.set=Object.assign(S.set,d.set||{});['cust','prod','inv','exp'].forEach(k=>S[k]=d[k]||[]);normalize();snap={};const m=docs();for(const k in m)if(k!='set:main'||d.set)snap[k]=JSON.stringify(m[k]);persist();if(!d.set)save();warm()}
 function loadUsage(){fetch('/api/usage').then(r=>r.json()).then(u=>{const e=$('#usage');if(!e)return;const p=Math.min(100,u.bytes/u.limit*100);e.innerHTML=`<div class=row><span>${(u.bytes/1048576).toFixed(1)} MB of ${Math.round(u.limit/1048576)} MB used</span><small>${u.photos} photos</small></div><div class=track style="margin-top:10px"><i style="width:${Math.max(p,1)}%"></i></div>`}).catch(()=>{})}
 function go(v){V=v;D=null;E=v=='set'?S.set:null;render();window.scrollTo(0,0)}
 function render(){
@@ -138,6 +180,7 @@ function render(){
   $('#app').className=V=='dash'?'wide':'';
   if(V=='set')setTimeout(loadUsage,0);
   $('#app').innerHTML=R[V]()+(E&&SP[V]?sheet():'')+nav;
+  pill();
 }
 const kf=n=>n>=1e7?+(n/1e7).toFixed(1)+'Cr':n>=1e5?+(n/1e5).toFixed(1)+'L':n>=1e3?+(n/1e3).toFixed(1)+'K':Math.round(n)+'';
 const nice=x=>{if(x<=0)return 1;const p=Math.pow(10,Math.floor(Math.log10(x))),f=x/p;return(f<=1?1:f<=2?2:f<=5?5:10)*p};
@@ -220,13 +263,14 @@ function editor(){const d=D;return `<div class=head><button class="txt back" dat
 <div class=bar><div><small>Total</small><b id=bar>${money(calc(d).g)}</b></div><button class="btn pri" data-a=saveinv>Save invoice</button></div>`}
 function viewInv(){
   const d=S.inv.find(x=>x.id==VID);if(!d)return '<div class=card>Invoice not found.</div>';
-  const u=`/api/invoice/${d.id}.pdf`,paid=d.status=='paid';
+  const u=`/api/invoice/${d.id}.pdf`,paid=d.status=='paid',ok=navigator.onLine&&state!='auth'&&synced(d.id);
   return `<div class=head><button class="txt back" data-a=go data-v=inv>${ico(IC.back,18)}Invoices</button></div>
 <div class=card><div class=row style="align-items:flex-start"><div class=rowline>${av(d.cname)}<div><b style="font-size:17px">${esc(d.cname||'Walk-in')}</b><small style="display:block">${no(d)} · ${fd(d.date)}</small></div></div><span class="chip ${d.status}">${paid?'Paid':'Unpaid'}</span></div>
 <div class="num big">${money(calc(d).g)}</div>
-<div class=acts><a class="btn pri" href="${u}?dl=1" download>${ico(IC.dl,18)}Download PDF</a><a class=btn href="${u}" target=_blank rel=noopener>${ico(IC.ext,18)}Open</a></div>
+<div class=acts>${ok?`<a class="btn pri" href="${u}?dl=1" download>${ico(IC.dl,18)}Download PDF</a><a class=btn href="${u}" target=_blank rel=noopener>${ico(IC.ext,18)}Open</a>`:`<button class="btn pri" disabled>${ico(IC.dl,18)}Download PDF</button><button class=btn disabled>${ico(IC.ext,18)}Open</button>`}</div>
+${ok?'':`<small style="display:block;margin-top:10px">${navigator.onLine&&state!='auth'?'Saving this invoice to the cloud. The PDF will be ready in a moment.':'The PDF needs internet. Your invoice is saved on this phone and will sync automatically.'}</small>`}
 <div class=acts2><button class="btn sm" data-a=tgl>${ico(IC.check,16)}Mark as ${paid?'unpaid':'paid'}</button><button class="btn sm" data-a=einv data-id=${d.id}>Edit</button><button class="txt red" data-a=dinv data-id=${d.id}>Delete</button></div></div>
-<iframe class=pdf src="${u}?v=${Date.now()}" title="Invoice preview"></iframe>`;
+${ok?`<iframe class=pdf src="${u}?v=${Date.now()}" title="Invoice preview"></iframe>`:''}`;
 }
 function list(k){
   const L=S[k].slice();if(k=='exp')L.sort((a,b)=>(b.date||'').localeCompare(a.date||''));else L.sort((a,b)=>a.name.localeCompare(b.name));
@@ -240,10 +284,13 @@ function list(k){
 function sheet(){const k=V,ed=S[k].some(x=>x.id==E.id);
   return `<div class=ov data-a=close><div class=sheet role=dialog aria-modal=true><div class=row style="margin-bottom:14px"><h3>${ed?'Edit':'New'} ${LBL[k]}</h3><button class=txt data-a=close>Cancel</button></div>${SP[k].map(([n,l,t])=>`<label class=fld>${l}<input data-f=${n} type=${t||'text'} ${t=='number'?'inputmode=decimal step=any min=0':''} ${n=='cat'?'list=cats':''} value="${esc(E[n])}"></label>`).join('')}<datalist id=cats>${[...new Set(['Ingredients','Packaging','Delivery','Utilities',...S.exp.map(e=>e.cat).filter(Boolean)])].map(c=>`<option value="${esc(c)}">`).join('')}</datalist><div class=row style="margin-top:6px">${ed?`<button class="txt red" data-a=del data-id=${E.id}>Delete</button>`:'<span></span>'}<button class="btn pri" data-a=save>Save</button></div></div></div>`}
 function more(){return `<div class=head><h1>More</h1></div><div class=card style="padding:4px 18px">${[['cust','Customers','Everyone you bill'],['prod','Products','Your menu and default rates'],['set','Settings','Business details and invoice setup']].map(([v,t,s])=>`<div class=rowi data-a=go data-v=${v}><div class=ic>${ico(IC[v])}</div><div class=grow><b>${t}</b><small>${s}</small></div><span style="color:var(--mut)">${ico(IC.chev,18)}</span></div>`).join('')}</div><a class="btn" href=/logout style="width:100%">${ico(IC.out,18)}Log out</a>`}
-function settings(){const s=S.set;return `<div class=head><div><button class="txt back mobonly" data-a=go data-v=more>${ico(IC.back,18)}More</button><h1>Settings</h1></div></div>
+const xrange=()=>{const n=new Date(),y=n.getFullYear(),m=n.getMonth(),Dt=(a,b,c)=>ymd(new Date(a,b,c));if(XR=='month')return[Dt(y,m,1),today()];if(XR=='last')return[Dt(y,m-1,1),Dt(y,m,0)];if(XR=='year')return[Dt(y,0,1),today()];return['','']};
+function settings(){const[xf,xt]=xrange(),q=xf?`?from=${xf}&amp;to=${xt}`:'';const s=S.set;return `<div class=head><div><button class="txt back mobonly" data-a=go data-v=more>${ico(IC.back,18)}More</button><h1>Settings</h1></div></div>
 <div class=card><h3>Business</h3><div class=logo-row><label class=logo-pick>${s.logo?`<img src="${src(s.logo)}" alt="">`:ico(IC.camera,26)}<input type=file accept="image/*" hidden data-file=logo></label><div class=grow><b>Logo</b><small>Tap the square to ${s.logo?'change':'add'} it</small>${s.logo?`<button class="txt red" data-a=rmlogo style="padding-left:0">Remove logo</button>`:''}</div></div>
 <div class=g2><label class=fld>Business name<input data-f=name value="${esc(s.name)}"></label><label class=fld>Email<input data-f=email value="${esc(s.email)}"></label><label class=fld>Phone / WhatsApp<input data-f=phone value="${esc(s.phone)}"></label><label class=fld>Instagram handle<input data-f=insta value="${esc(s.insta)}" placeholder="yourhandle"></label></div><label class=fld style="margin-top:12px">Address<textarea data-f=addr>${esc(s.addr)}</textarea></label></div>
 <div class=card><h3>Invoices</h3><div class=g2 style="margin-top:8px"><label class=fld>Title on invoice<input data-f=title value="${esc(s.title)}"></label><label class=fld>Next invoice number<input data-f=next type=number inputmode=numeric min=1 value="${s.next}"></label><label class=fld>Currency symbol<input data-f=cur value="${esc(s.cur)}"></label><label class=fld>Default tax % (GST)<input data-f=tax type=number inputmode=decimal step=any value="${s.tax||''}" placeholder="0"></label></div><label class=fld style="margin-top:12px">Thank-you message on the bill<textarea data-f=note>${esc(s.note)}</textarea></label><label class=fld style="margin-top:12px">Signature line<input data-f=sign value="${esc(s.sign)}" placeholder="e.g. Baker-in-chief: Aakanksha"></label></div>
+<div class=card><h3>Export your data</h3><small>Download an Excel file you can open anywhere, or a full backup with all photos.</small><div class=seg style="margin:12px 0;display:flex">${[['month','Month'],['last','Last month'],['year','Year'],['all','All time']].map(([v,l])=>`<button data-a=xr data-v=${v} class="${XR==v?'on':''}">${l}</button>`).join('')}</div><div class=acts><button class="btn pri" data-a=dl data-u="/api/export.xlsx${q}">${ico(IC.dl,18)}Excel</button><button class=btn data-a=dl data-u="/api/backup.zip">${ico(IC.dl,18)}Full backup</button></div><small style="display:block;margin-top:10px">The Excel file has Summary, Invoices, Items, Expenses, Customers and Products sheets. The backup always contains everything.</small></div>
+<div class=card><h3>Use it on your phone</h3><small>Install it like an app. It opens offline, and anything you add is saved on the phone and uploaded when you are back online.</small>${DEF?'<div class=acts><button class="btn pri" data-a=install>Install app</button></div>':'<small style="display:block;margin-top:8px">Android Chrome: menu, then Install app. iPhone Safari: Share, then Add to Home Screen.</small>'}</div>
 <div class=card><h3>Storage</h3><div id=usage><small>Checking...</small></div></div>
 <a class="btn dskonly" href=/logout>${ico(IC.out,18)}Log out</a>`}
 document.addEventListener('input',e=>{const t=e.target;
@@ -258,7 +305,7 @@ document.addEventListener('keydown',e=>{const t=e.target;
   if(e.key=='ArrowDown'||e.key=='ArrowUp'){e.preventDefault();if(i<0&&e.key=='ArrowUp')i=0;if(bs[i])bs[i].classList.remove('hl');i=(i+(e.key=='ArrowDown'?1:-1)+bs.length)%bs.length;bs[i].classList.add('hl')}
   else if(e.key=='Enter'&&i>=0){e.preventDefault();bs[i].click()}else if(e.key=='Escape')box.style.display='none'});
 document.addEventListener('change',e=>{const t=e.target,d=t.dataset;
-  if(d.file)[...t.files].forEach(f=>img(f,d.file=='logo'?400:900,u=>upload(u).then(id=>{if(d.file=='logo'){S.set.logo=id;save()}else D.imgs.push(id);render()}).catch(()=>toast('Photo upload failed. Please try again.'))))});
+  if(d.file)[...t.files].forEach(f=>img(f,d.file=='logo'?400:900,u=>{const id='l_'+uid();LOCAL[id]=u;idb.set('limgs',LOCAL);if(d.file=='logo'){S.set.logo=id;save()}else D.imgs.push(id);render();flush()}))});
 document.addEventListener('click',e=>{
   if(!e.target.closest('.cb'))document.querySelectorAll('.dd').forEach(x=>x.style.display='none');
   const b=e.target.closest('[data-a]');if(!b)return;const d=b.dataset,a=d.a;
@@ -281,7 +328,7 @@ document.addEventListener('click',e=>{
     it.forEach(t=>{const n=t.name=t.name.trim();if(!S.prod.some(p=>p.name.toLowerCase()==n.toLowerCase()))S.prod.push({id:uid(),name:n,rate:+t.rate||0})});D.items=it;
     const n=(D.cname||'').trim();D.cname=n;if(n&&!S.cust.some(c=>c.name.toLowerCase()==n.toLowerCase()))S.cust.push({id:uid(),name:n});
     if(D.isNew){delete D.isNew;S.set.next=Math.max(+S.set.next||1,D.no+1);S.inv.push(D)}else S.inv=S.inv.map(x=>x.id==D.id?D:x);
-    save();VID=D.id;V='view';D=null;window.scrollTo(0,0);toast('Invoice saved')}
+    save();VID=D.id;V='view';D=null;window.scrollTo(0,0);toast(navigator.onLine?'Invoice saved':'Saved on this phone. It will sync when you are online')}
   else if(a=='add'){E={id:uid()};if(V=='exp')E.date=today()}
   else if(a=='edit')E=JSON.parse(JSON.stringify(S[V].find(x=>x.id==d.id)));
   else if(a=='close')E=null;
@@ -289,13 +336,35 @@ document.addEventListener('click',e=>{
   else if(a=='save'){const ok=V=='exp'?+E.amt>0:(E.name||'').trim();if(!ok){toast(V=='exp'?'Enter an amount':'Enter a name');return}
     const k=S[V].findIndex(x=>x.id==E.id);if(k>=0)S[V][k]=E;else S[V].push(E);save();E=null;toast('Saved')}
   else if(a=='rmlogo'){S.set.logo='';save()}
+  else if(a=='xr')XR=d.v;
+  else if(a=='dl'){if(!navigator.onLine){toast('Exports need an internet connection');return}flush().then(()=>{location.href=d.u});return}
+  else if(a=='install'){if(DEF){DEF.prompt();DEF=null}}
   else return;
   render();
   if(a=='add'||a=='edit'){const f=$('.sheet input');if(f)f.focus()}});
-fetch('/api/all').then(r=>{if(!r.ok)throw 0;return r.json()}).then(d=>{
-  S.set=Object.assign(S.set,d.set||{});['cust','prod','inv','exp'].forEach(k=>S[k]=d[k]);
-  S.inv.forEach(i=>{i.imgs=i.imgs||[];i.items.forEach(t=>{if(t.rate==null)t.rate=t.price})});
-  const m=docs();for(const k in m)if(k!='set:main'||d.set)snap[k]=JSON.stringify(m[k]);
-  if(!d.set)save();render()
-}).catch(()=>{$('#app').innerHTML='<p style="padding:30px;text-align:center">Could not load your data. Refresh the page.</p>'});
+(async()=>{
+  LOCAL=(await idb.get('limgs'))||{};
+  const L=await idb.get('state');
+  if(L&&L.S){S.set=Object.assign(S.set,L.S.set||{});['cust','prod','inv','exp'].forEach(k=>S[k]=L.S[k]||[]);snap=L.snap||{};normalize();render()}
+  state=navigator.onLine?'ok':'offline';pill();
+  try{
+    if(L)await flush();
+    const r=await fetch('/api/all');
+    if(r.status==401){state='auth';pill();if(!L)$('#app').innerHTML='<p style="padding:30px;text-align:center">Please <a href="/login">log in</a> to load your data.</p>';return}
+    if(!r.ok)throw 0;
+    const d=await r.json();
+    if(!L||!pendingCount()){adopt(d);if(!D&&!E)render()}
+  }catch(e){
+    if(!L)$('#app').innerHTML='<p style="padding:30px;text-align:center">Cannot reach the server. Connect to the internet and refresh.</p>';
+    else{state=navigator.onLine?'pending':'offline';pill()}}
+})();
+window.addEventListener('online',()=>{state='pending';pill();flush()});
+window.addEventListener('offline',()=>{state='offline';pill();if(V=='view')render()});
+document.addEventListener('visibilitychange',()=>{if(!document.hidden&&state!='ok')flush()});
+setInterval(()=>{if(state!='ok'&&navigator.onLine)flush()},20000);
+window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();DEF=e;if(V=='set')render()});
+document.addEventListener('click',e=>{const a=e.target.closest('a[href="/logout"]');if(!a)return;e.preventDefault();
+  if(pendingCount()&&!confirm('Some changes are not synced yet and would be lost if you log out. Log out anyway?'))return;
+  idb.clear().then(()=>window.caches?caches.keys():[]).then(ks=>Promise.all(ks.map(k=>caches.delete(k)))).finally(()=>{location.href='/logout'})});
+if('serviceWorker' in navigator)navigator.serviceWorker.register('/sw.js').then(()=>navigator.serviceWorker.ready).then(()=>fetch('/').catch(()=>{})).catch(()=>{});
 </script></body></html>

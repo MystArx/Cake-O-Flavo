@@ -1,6 +1,8 @@
-import os, json, hmac, hashlib, time, base64, uuid, asyncio
+import os, json, hmac, hashlib, time, base64, uuid, asyncio, tempfile, zipfile, re
+from datetime import date
 from urllib.parse import parse_qs
-from fastapi import FastAPI, HTTPException, Request, BackgroundTasks
+from fastapi import FastAPI, HTTPException, Request, BackgroundTasks, Query
+from starlette.background import BackgroundTask
 from fastapi.responses import FileResponse, Response, HTMLResponse, RedirectResponse, JSONResponse
 from sqlalchemy import text
 from core import db, load_all, imgs, img_put, img_get, usage
@@ -8,6 +10,8 @@ from core import db, load_all, imgs, img_put, img_get, usage
 KINDS = {"set", "meta", "cust", "prod", "inv", "exp"}
 PW = os.getenv("APP_PASSWORD", "")
 DAYS = 30
+PUBLIC = {"/login", "/manifest.webmanifest", "/sw.js"}
+STATIC = os.path.join(os.path.dirname(__file__), "static")
 app = FastAPI()
 
 # ---------- login (password from the APP_PASSWORD environment variable) ----------
@@ -35,7 +39,7 @@ button{width:100%;padding:12px;border:0;border-radius:11px;background:#d6336c;co
 
 @app.middleware("http")
 async def gate(req: Request, call_next):
-    if req.url.path == "/login" or authed(req):
+    if req.url.path in PUBLIC or req.url.path.startswith("/icons/") or authed(req):
         return await call_next(req)
     if req.url.path.startswith("/api/"):
         return JSONResponse({"detail": "Not authenticated"}, 401)
@@ -126,3 +130,45 @@ def cron(period: str, bg: BackgroundTasks):
     from summary import send_summary
     bg.add_task(send_summary, period)
     return {"queued": period}
+
+# ---------- installable app (public files, no private data) ----------
+@app.get("/manifest.webmanifest")
+def manifest():
+    return FileResponse(os.path.join(STATIC, "manifest.webmanifest"), media_type="application/manifest+json")
+
+@app.get("/sw.js")
+def service_worker():
+    return FileResponse(os.path.join(STATIC, "sw.js"), media_type="application/javascript",
+                        headers={"Cache-Control": "no-cache", "Service-Worker-Allowed": "/"})
+
+@app.get("/icons/{name}")
+def icon(name: str):
+    p = os.path.join(STATIC, "icons", os.path.basename(name))
+    if not os.path.isfile(p): raise HTTPException(404)
+    return FileResponse(p, media_type="image/png", headers={"Cache-Control": "public, max-age=86400"})
+
+# ---------- data export ----------
+def slug():
+    n = (load_all()["set"] or {}).get("name", "bakery")
+    return re.sub(r"[^a-z0-9]+", "-", n.lower()).strip("-") or "bakery"
+
+@app.get("/api/export.xlsx")
+def export_xlsx(frm: str = Query("", alias="from"), to: str = ""):
+    from export import make_xlsx
+    tag = f"{frm}_to_{to}" if frm else "all-time"
+    return Response(make_xlsx(frm, to), media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                    headers={"Content-Disposition": f'attachment; filename="{slug()}-report-{tag}.xlsx"'})
+
+@app.get("/api/backup.zip")
+def backup():
+    d = load_all()
+    tmp = tempfile.NamedTemporaryFile(delete=False, suffix=".zip"); tmp.close()
+    ids = {i for inv in d["inv"] for i in inv.get("imgs", [])} | ({d["set"]["logo"]} if d["set"] and d["set"].get("logo") else set())
+    with zipfile.ZipFile(tmp.name, "w", zipfile.ZIP_DEFLATED) as z:
+        z.writestr("data.json", json.dumps(d, indent=1, ensure_ascii=False))
+        z.writestr("README.txt", "data.json holds your invoices, customers, products, expenses and settings.\nphotos/ holds every photo; invoices refer to them by file name.\n")
+        for i in ids:
+            b = img_get(i)
+            if b: z.writestr(f"photos/{i}.jpg", b, compress_type=zipfile.ZIP_STORED)
+    return FileResponse(tmp.name, media_type="application/zip", filename=f"{slug()}-backup-{date.today().isoformat()}.zip",
+                        background=BackgroundTask(os.remove, tmp.name))
