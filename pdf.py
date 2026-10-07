@@ -160,7 +160,7 @@ def make_pdf(iid):
     ph = re.sub(r"\D", "", s.get("phone", "")); ph = "91" + ph if len(ph) == 10 else ph
     ig = s.get("insta", "").strip().lstrip("@")
     if "instagram.com/" in ig: ig = ig.split("instagram.com/")[1].split("/")[0].split("?")[0]
-    qrs = ([("https://wa.me/" + ph, "WhatsApp")] if ph else []) + ([("https://instagram.com/" + ig, "Instagram")] if ig else [])
+    qrs = ([("https://instagram.com/" + ig, "Instagram")] if ig else [])
     msg = s.get("note") or "Thank you for choosing us. We hope to serve you again!"
     def deco(c, doc):
         c.saveState(); c.setFillColor(PINK); c.rect(0, PH - 4 * mm, PW, 4 * mm, fill=1, stroke=0)
